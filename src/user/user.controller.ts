@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Put,
+  Post,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDTO } from './dto/create-user.dto';
@@ -17,7 +18,7 @@ import { UpdatePatchUserDTO } from './dto/update-patch-user.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Get()
+  @Post()
   async create(@Body() data: CreateUserDTO) {
     return this.userService.create(data);
   }
