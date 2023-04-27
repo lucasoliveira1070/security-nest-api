@@ -23,6 +23,7 @@ export class UserService {
   }
 
   async findOne(id: number) {
+    this.checkIfUserExists(id);
     return this.prismaService.users.findFirst({
       where: {
         id,
@@ -63,7 +64,7 @@ export class UserService {
   }
 
   async checkIfUserExists(id: number) {
-    const user = await this.prismaService.users.findFirst({
+    const user = await this.prismaService.users.count({
       where: {
         id,
       },
