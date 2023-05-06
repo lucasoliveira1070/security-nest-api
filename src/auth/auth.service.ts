@@ -1,19 +1,27 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { users } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthRegisterDTO } from './dto/auth-register.dto';
 import { UserService } from 'src/user/user.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
+  private issuer = 'login';
+  private audience = 'users';
+
   constructor(
     private readonly JWTService: JwtService,
     private readonly prismaService: PrismaService,
     private readonly userService: UserService,
   ) {}
 
-  async createToken(user: users) {
+  createToken(user: users) {
     return {
       accessToken: this.JWTService.sign(
         {
@@ -24,26 +32,46 @@ export class AuthService {
         {
           expiresIn: '7 days',
           subject: String(user.id),
-          issuer: 'login',
-          audience: 'users',
+          issuer: this.issuer,
+          audience: this.audience,
         },
       ),
     };
   }
 
-  async checkToken(token: string) {
-    //return this.JWTService.verify();
+  checkToken(token: string) {
+    try {
+      const data = this.JWTService.verify(token, {
+        issuer: this.issuer,
+        audience: this.audience,
+      });
+      return data;
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
+  isValidToken(token) {
+    try {
+      this.checkToken(token);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
   async login(email: string, password: string) {
     const user = await this.prismaService.users.findFirst({
       where: {
         email,
-        password,
       },
     });
+    console.log(user, password);
     if (!user)
       throw new UnauthorizedException('Invalid email and/or password ');
+
+    if (!(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException('Invalid email and/or password ');
+    }
 
     return this.createToken(user);
   }
