@@ -65,13 +65,11 @@ export class AuthService {
         email,
       },
     });
-    console.log(user, password);
     if (!user)
       throw new UnauthorizedException('Invalid email and/or password ');
 
-    if (!(await bcrypt.compare(password, user.password))) {
+    if (!(await bcrypt.compare(password, user.password)))
       throw new UnauthorizedException('Invalid email and/or password ');
-    }
 
     return this.createToken(user);
   }
